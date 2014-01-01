@@ -50,6 +50,29 @@ public class RSRaster extends QueueNode {
 		}
 	}
 	
+	public static void drawHorizontalLine(int x, int y, int length, int color, int alphaValue) {
+		if (y < topY || y >= bottomY)
+			return;
+		if (x < topX) {
+			length -= topX - x;
+			x = topX;
+		}
+		if (x + length > bottomX)
+			length = bottomX - x;
+		int alpha = 256 - alphaValue;
+		int red = (color >> 16 & 0xff) * alphaValue;
+		int green = (color >> 8 & 0xff) * alphaValue;
+		int blue = (color & 0xff) * alphaValue;
+		int pixel = x + y * width;
+		for (int index = 0; index < length; index++) {
+			int r = (pixels[pixel] >> 16 & 0xff) * alpha;
+			int g = (pixels[pixel] >> 8 & 0xff) * alpha;
+			int b = (pixels[pixel] & 0xff) * alpha;
+			int pixelColor = ((red + r >> 8) << 16) + ((green + g >> 8) << 8) + (blue + b >> 8);
+			pixels[pixel++] = pixelColor;
+		}
+	}
+	
 	public static void drawVerticalLine(int drawX, int drawY, int lineLength, int color) {
 		if (drawX >= topX && drawX < bottomX) {
 			if (drawY < topY) {
@@ -66,12 +89,125 @@ public class RSRaster extends QueueNode {
 		}
 	}
 	
+	public static void drawVerticalLine(int x, int y, int length, int color, int alpha) {
+		if (x < topX || x >= bottomX) {
+			return;
+		}
+		if (y < topY) {
+			length -= topY - y;
+			y = topY;
+		}
+		if (y + length > bottomY) {
+			length = bottomY - y;
+		}
+		int alphaValue = 256 - alpha;
+		int red = (color >> 16 & 0xff) * alpha;
+		int green = (color >> 8 & 0xff) * alpha;
+		int blue = (color & 0xff) * alpha;
+		int pixel = x + y * width;
+		for (int j3 = 0; j3 < length; j3++) {
+			int r = (pixels[pixel] >> 16 & 0xff) * alphaValue;
+			int g = (pixels[pixel] >> 8 & 0xff) * alphaValue;
+			int b = (pixels[pixel] & 0xff) * alphaValue;
+			int pixelColor = ((red + r >> 8) << 16) + ((green + g >> 8) << 8) + (blue + b >> 8);
+			pixels[pixel] = pixelColor;
+			pixel += width;
+		}
+	}
+	
+    public static void drawRoundedRectangle(int x, int y, int width,
+            int height, int color, int alpha, boolean filled, boolean shadowed, int roundDepth) {
+        if (shadowed) {
+            drawRoundedRectangle(x + 1, y + 1, width, height, 0, alpha, filled, false, roundDepth);
+        }
+        if (alpha == -1) {
+            if (filled) {
+                drawHorizontalLine(y + 1, color, width - 4, x + 2);
+                drawHorizontalLine(y + height - 2, color, width - 4, x + 2);
+                drawFilledPixels(height - 4, y + 2, x + 1, color, width - 2);
+            }
+            drawHorizontalLine(y, color, width - 4, x + 2);
+            drawHorizontalLine(y + height - 1, color, width - 4, x + 2);
+            drawVerticalLine(x, y + 2, height - 4, color);
+            drawVerticalLine(x + width - 1, y + 2, height - 4, color);
+            drawFilledPixels(x + 1, y + 1, 1, 1, color);
+            drawFilledPixels(x + width - 2, y + 1, 1, 1, color);
+            drawFilledPixels(x + width - 2, y + height - 2, 1, 1, color);
+            drawFilledPixels(x + 1, y + height - 2, 1, 1, color);
+        } else if (alpha != -1) {
+            if (filled) {
+                drawHorizontalLine(x + 2, y + 1, width - 4, color, alpha);
+                drawHorizontalLine(x + 2, y + height - 2, width - 4, color, alpha);
+                drawFilledPixels(x + 1, y + 2, width - 2, height - 4, color, alpha);
+            }
+            drawHorizontalLine(x + 2, y, width - 4, color, alpha);
+            drawHorizontalLine(x + 2, y + height - 1, width - 4, color, alpha);
+            drawVerticalLine(x, y + 2, height - 4, color, alpha);
+            drawVerticalLine(x + width - 1, y + 2, height - 4, color, alpha);
+            fillRectangleAlpha(x + 1, y + 1, 1, 1, color, alpha);
+            fillRectangleAlpha(x + width - 2, y + 1, 1, 1, color, alpha);
+            fillRectangleAlpha(x + 1, y + height - 2, 1, 1, color, alpha);
+            fillRectangleAlpha(x + width - 2, y + height - 2, 1, 1, color, alpha);
+        }
+    }
+	
 	public static void drawRectangle(final int x, final int y, final int w,
 			final int h, final int color) {
 		drawHorizontalLine(x, y, w, color);
 		drawHorizontalLine(x, y + h - 1, w, color);
 		drawVerticalLine(x, y, h, color);
 		drawVerticalLine(x + w - 1, y, h, color);
+	}
+	
+	public static void drawFilledPixels(int xPos, int yPos,
+		    int pixelWidth, int pixelHeight, int color, int alpha) { // method586
+		    if (xPos < topX) {
+		        pixelWidth -= topX - xPos;
+		        xPos = topX;
+		    }
+		    if (yPos < topY) {
+		        pixelHeight -= topY - yPos;
+		        yPos = topY;
+		    }
+		    if (xPos + pixelWidth > bottomX)
+		        pixelWidth = bottomX - xPos;
+		    if (yPos + pixelHeight > bottomY)
+		        pixelHeight = bottomY - yPos;
+		    color = ((color & 0xff00ff) * alpha >> 8 & 0xff00ff) + ((color & 0xff00) * alpha >> 8 & 0xff00);
+		    int k1 = 256 - alpha;
+		    int l1 = width - pixelWidth;
+		    int i2 = xPos + yPos * width;
+		    for (int j2 = 0; j2 < pixelHeight; j2++) {
+		        for (int k2 = -pixelWidth; k2 < 0; k2++) {
+		            int l2 = pixels[i2];
+		            l2 = ((l2 & 0xff00ff) * k1 >> 8 & 0xff00ff) + ((l2 & 0xff00) * k1 >> 8 & 0xff00);
+		            pixels[i2++] = color + l2;
+		        }
+		        i2 += l1;
+		    }
+		}
+	
+	public static void drawFilledPixels(int x, int y, int pixelWidth,
+			int pixelHeight, int color) {// method578
+		if (x < topX) {
+			pixelWidth -= topX - x;
+			x = topX;
+		}
+		if (y < topY) {
+			pixelHeight -= topY - y;
+			y = topY;
+		}
+		if (x + pixelWidth > bottomX)
+			pixelWidth = bottomX - x;
+		if (y + pixelHeight > bottomY)
+			pixelHeight = bottomY - y;
+		int j1 = width - pixelWidth;
+		int k1 = x + y * width;
+		for (int l1 = -pixelHeight; l1 < 0; l1++) {
+			for (int i2 = -pixelWidth; i2 < 0; i2++)
+				pixels[k1++] = color;
+			k1 += j1;
+		}
 	}
 	
 	public static void fillRectangleAlpha(int x, int y, int w, int h,

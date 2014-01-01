@@ -1,4 +1,6 @@
 import java.awt.Color;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class RSFont extends RSRaster {
 
@@ -521,6 +523,66 @@ public class RSFont extends RSRaster {
 			}
 		}
 		return finalWidth;
+	}
+	
+	public void drawAdvancedString(String string, int drawX, int drawY, int maxWidth, int color, int shadow, boolean centered) {
+		String breakline = "\r\n";
+		string = addBreakLines(string, maxWidth);
+		if(string.contains(breakline)){
+			String text = string.substring(0, string.indexOf(breakline));
+			String text2 = string.substring(string.indexOf(breakline)+2);
+			drawAdvancedString(text, drawX, drawY, maxWidth, color, shadow, centered);
+			drawAdvancedString(text2.trim(), drawX, drawY+15, maxWidth, color, shadow, centered);
+		} else {
+			if(centered)
+				drawCenteredString(string, drawX, drawY, color, shadow);
+			else
+				drawBasicString(string, drawX, drawY, color, shadow);
+		}
+	}
+	
+	
+    public String addBreakLines(String string, int width) {
+    	String breakline = "\r\n";
+    	int textWidth = this.getTextWidth(string);
+    	String outText = "";
+    	String rest = "";
+    	if(textWidth > width) {
+    		for(int i=string.length(); i>0; i--) {
+    			String temp = string.substring(0, i);
+    			if(this.getTextWidth(temp) < width) {
+    				outText += (temp+breakline);
+    				rest = string.substring(i, string.length());
+    				break;
+    			}
+    		}
+    	} else {
+    		outText += string;
+    	}
+    	if(rest.length() > 0)
+    		outText += addBreakLines(rest, width);
+    	return outText;
+    }
+	
+	
+	public String validateText(String string, int maxWidth) {
+		String outText;
+		if(maxWidth > 0 && this.getTextWidth(string) > maxWidth) {
+			for(int i=string.length(); i>0; i--) {
+				
+			}
+		}
+		return string;
+	}
+	
+	public int getTextHeight(String string) {
+		Pattern p = Pattern.compile("\r\n");
+		Matcher m = p.matcher(string);
+		int count = 1;
+		while(m.find())
+			count++;
+		
+		return (count * 14);
 	}
 
 	public void drawBasicString(String string, int drawX, int drawY, int color, int shadow) {

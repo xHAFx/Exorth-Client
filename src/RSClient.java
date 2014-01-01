@@ -11434,13 +11434,18 @@ public class RSClient extends GameShell
     }
     
     private void drawUpdateText() {
-    	int space = 60;
+    	
     	List<Update> updates = updateFeed.getFeed();
+    	int baseY = 60;
+    	int baseX = 490;
     	for(int i=0; i<updates.size(); i++) {
     		Update update = updates.get(i);
-    		int title = 60+(space*i);
-    		newRegularFont.drawBasicString(update.getDate(), 490, title);
-    		newRegularFont.drawBasicString(update.getData(), 490, title+20);
+    		String data = newRegularFont.addBreakLines(update.getData(), 250);
+    		int textHeight = newRegularFont.getTextHeight(data);
+    		RSRaster.drawRoundedRectangle(baseX-5, baseY-15, 263, textHeight+25, 0x000000, 100, true, false, 10);
+    		newRegularFont.drawBasicString(update.getDate(), baseX, baseY);
+    		newRegularFont.drawAdvancedString(data, baseX, baseY+20, 250, 0xFFFFFF, 0, false);
+    		baseY += 30+textHeight;
     	}
     }
 
