@@ -1,4 +1,4 @@
-Exorth-Client
+Exorth Client
 =============
 
 Client for Exorth Remake
